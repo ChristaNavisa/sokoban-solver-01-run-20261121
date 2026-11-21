@@ -1,10 +1,78 @@
-import{readFileSync,mkdirSync,writeFileSync}from'node:fs';
-const e=process.env,I=e.MAKEFUN_INPUT_DIR??'/input',O=e.MAKEFUN_OUTPUT_DIR??'/output';
-let w,A,E,g,o,s,m,k,t=0,F0,ph,sz,PE;const D='udlr';
-function P(x){let r=x.split('\n'),h=r.length;w=r[0].length;sz=w*h;A=new Uint8Array(sz).fill(1);let G=[],B=[],p=-1;r.forEach((y,j)=>{for(let i=0;i<y.length;i++){let q=j*w+i,c=y[i];if(c=='#')continue;if(i&&j)A[q]=0;if(c=='.'||c=='*'||c=='+')G.push(q);if(c=='$'||c=='*')B.push(q);if(c=='@'||c=='+')p=q}});s=new Int32Array(sz);m=new Int32Array(sz);k=new Int32Array(sz);ph=new Int32Array(sz);E=[-w,w,-1,1];F0=A;return{G,B,p}}
-function V(G){let v=new Uint8Array(sz),q=G.map(x=>(v[x]=1,x));for(let i=0;i<q.length;i++)for(let d of E){let y=q[i]-d;if(!A[y]&&!A[y-d]&&!v[y]){v[y]=1;q.push(y)}}return v}
-function R(f,S,r){let l=f,n=0;k[n++]=f;S[f]=++t;if(r)ph[f]=f;while(n){let p=k[--n];if(p<l)l=p;for(let j=0;j<4;j++){let q=p+E[j];if(!A[q]&&!o[q]&&S[q]!=t){S[q]=t;k[n++]=q;if(r)ph[q]=p+j*sz}}}return l}
-function B(v){let{G,B,p}=v;g=new Uint8Array(sz);for(let x of G)g[x]=1;let L=V(G);o=new Uint8Array(sz);if(B.some(b=>!L[b]))return null;let Y=[B],Z=[p],X=new Map(),MV=[''];B.forEach(b=>o[b]=1);X.set(R(p,s,0)+','+B,0);B.forEach(b=>o[b]=0);let f=B.every(b=>g[b])?0:-1;for(let h=0;f<0&&h<Y.length;h++){let b=Y[h];for(let x of b)o[x]=1;R(Z[h],s,1);let H=t;for(let i=0;i<b.length&&f<0;i++){let c=b[i];for(let j=0;j<4;j++){let d=E[j],u=c+d;if(s[c-d]!=H||A[u]||o[u]||!L[u])continue;o[c]=0;o[u]=1;let N=b.slice();N[i]=u;N.sort((a,b)=>a-b);let z=R(c,m,0)+','+N;o[u]=0;o[c]=1;if(X.has(z))continue;if(Y.length>=25e4)return null;let wk='',q2=c-d;for(;q2!=Z[h];q2=ph[q2]%sz)wk=D[(ph[q2]/sz)|0]+wk;X.set(z,Y.length);Y.push(N);Z.push(c);MV.push(MV[h]+wk+D[j]);if(N.every(x=>g[x])){f=Y.length-1;break}}}for(let x of b)o[x]=0}if(f<0)return null;PE=Z[f];return MV[f]}
-function C(v){let{G,B,p}=v,r=(p/w)|0,c=A.slice();for(let i=r*w;i<(r+1)*w;i++)c[i]=1;if(B.some(b=>c[b]))return null;let T1=new Int32Array(sz).fill(-1),R1=[];for(let y=0;y<sz;y++){if(c[y]||T1[y]>=0)continue;let q=[y];T1[y]=R1.length;for(let i=0;i<q.length;i++)for(let d of E){let n=q[i]+d;if(!c[n]&&T1[n]<0){T1[n]=R1.length;q.push(n)}}R1.push([[],[]])}for(let a of[[B,0],[G,1]])for(let x of a[0]){let y=T1[x];if(y>=0)R1[y][a[1]].push(x)}return R1.filter(z=>z[0].length)}
-function N(x){let v=P(x),R1=C(v)||[[v.B,v.G]],pl=v.p,mv='';for(let r of R1){A=F0.slice();for(let o2 of R1)if(o2!=r)for(let b of o2[0])A[b]=1;let z=B({G:r[1],B:r[0],p:pl});if(z==null)return'';mv+=z;pl=PE;r[0]=r[1]}return mv}
-for(let i=1;i<6;i++){let d='i00'+i,mv=N(readFileSync(I+'/'+d+'/level.txt','utf8'));mkdirSync(O+'/'+d,{recursive:true});writeFileSync(O+'/'+d+'/solution.txt',mv+'\n')}
+import*as f from"node:fs";
+let w,g,G,B,P,O;
+function parse(t){
+w=t.indexOf("\n");g=t.replace(/\n/g,"");G=[];B=[];
+for(let i=0;i<g.length;i++){let c=g[i];
+if(".*+".includes(c))G.push(i);
+if("$*".includes(c))B.push(i);
+if("@+".includes(c))P=i;}
+O=[-w,w,-1,1];
+}
+function flood(C,p){
+let v=[],q=[p];
+v[p]=p;
+for(let i=0;i<q.length;i++){let s=q[i];
+for(let k=0;k<4;k++){let t=s+O[k];
+if(g[t]!="#"&&!C[t]&&v[t]==null){v[t]=s;q.push(t);}}}
+return[Math.min(...q),v];
+}
+function solve(A,B,p,C){
+let V=[],Q=A.slice();
+for(let x of A)V[x]=1;
+for(let i=0;i<Q.length;i++){let x=Q[i];
+for(let d of O){let y=x-d;
+if(g[y]!="#"&&g[y-d]!="#"&&!V[y]){V[y]=1;Q.push(y);}}}
+if(B.some(b=>!V[b]))return null;
+let S=new Set(),H=[{b:B,m:"",p}];
+S.add(B.join()+"|"+flood(C,p)[0]);
+for(let h=0;h<H.length&&h<2e5;h++){
+let s=H[h];
+for(let x of s.b)C[x]=1;
+let[l,v]=flood(C,s.p);
+for(let i=0;i<s.b.length;i++){
+let b=s.b[i];
+for(let k=0;k<4;k++){let d=O[k],t=b+d;
+if(v[b-d]==null||g[t]=="#"||C[t]||!V[t])continue;
+C[b]=0;C[t]=1;
+let nb=s.b.slice();nb[i]=t;nb.sort((a,b)=>a-b);
+let nk=nb.join()+"|"+flood(C,b)[0];
+C[t]=0;C[b]=1;
+if(S.has(nk))continue;
+S.add(nk);
+let m=s.m,o="",q=b-d;
+while(q!=s.p){let r=v[q],e=q-r;o="udlr"[O.indexOf(e)]+o;q=r;}
+m+=o+"udlr"[k];
+if(nb.every(x=>A.includes(x))){for(let x of s.b)C[x]=0;return[m,b];}
+H.push({b:nb,m,p:b});
+}
+}
+for(let x of s.b)C[x]=0;
+}
+return null;
+}
+function rooms(){
+let row=P/w|0,part=[],R=[];
+for(let s=0;s<g.length;s++){
+if(g[s]=="#"||(s/w|0)==row||part[s]!=null)continue;
+let q=[s];part[s]=R.length;
+for(let i=0;i<q.length;i++)for(let k=0;k<4;k++){let t=q[i]+O[k];
+if(g[t]!="#"&&(t/w|0)!=row&&part[t]==null){part[t]=R.length;q.push(t);}}
+R.push({b:[],g:[]});
+}
+for(let b of B)R[part[b]].b.push(b);
+for(let x of G)if(part[x]!=null)R[part[x]].g.push(x);
+if(G.some(x=>part[x]==null)||R.some(r=>r.b.length!=r.g.length))return null;
+return R.filter(r=>r.b.length);
+}
+let I=process.env.MAKEFUN_INPUT_DIR||"/input",U=process.env.MAKEFUN_OUTPUT_DIR||"/output";
+for(let k=1;k<6;k++){
+let id="i00"+k;
+parse(f.readFileSync(I+"/"+id+"/level.txt","utf8"));
+let C=[],m="",p=P;
+for(let x of B)C[x]=1;
+let R=rooms()||[{g:G,b:B}],s;
+for(let r of R){s=solve(r.g,r.b,p,C)||["",p];m+=s[0];p=s[1];
+for(let x of r.b)C[x]=0;for(let x of r.g)C[x]=1;}
+f.mkdirSync(U+"/"+id,{recursive:!0});
+f.writeFileSync(U+"/"+id+"/solution.txt",m);
+}
