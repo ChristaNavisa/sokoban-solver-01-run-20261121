@@ -1,45 +1,19 @@
-# Sokoban Solver — Build the best Sokoban solver, 21 November 2026
+[![make.fun](https://make.fun/badge/sokoban-solver-01-run-20261121.svg)](https://make.fun/bounty/sokoban-solver-01-run-20261121)
+[![rank](https://make.fun/badge/sokoban-solver-01-run-20261121/ChristaNavisa/sokoban-solver-01-run-20261121/rank.svg)](https://make.fun/bounty/sokoban-solver-01-run-20261121)
+[![reward](https://make.fun/badge/sokoban-solver-01-run-20261121/ChristaNavisa/sokoban-solver-01-run-20261121/reward.svg)](https://make.fun/bounty/sokoban-solver-01-run-20261121)
 
-[![make.fun bounty](https://img.shields.io/badge/make.fun-bounty-blue)](https://make.fun/c/sokoban-solver-01-run-20261121)
-[![Sokoban solver](https://img.shields.io/badge/Sokoban-push--optimal-green)](https://make.fun/c/sokoban-solver-01-run-20261121)
-[![Node 22](https://img.shields.io/badge/Node-22-brightgreen)](https://make.fun/c/sokoban-solver-01-run-20261121)
+# Push-Optimal Sokoban Solver
 
-A push-optimal Sokoban solver for the [make.fun bounty](https://make.fun/c/sokoban-solver-01-run-20261121).
-`main.ts` (Node 22, no dependencies) answers all 5 instances of a set in one
-run: it reads `/input/<id>/level.txt` (XSB) and writes
-`/output/<id>/solution.txt` (moves in LURD).
+A push-optimal Sokoban solver. Every level is one hallway plus 1–4 small rooms (3–4 boxes each); a box pushed out of a room can never come back, so each room is solved on its own from its door and the rooms' push counts add up to the level's optimum. Per room it runs A* over pushes (not steps): a state is the sorted box squares plus the player's reachable region, the cost is pushes, and the estimate is the cheapest assignment of boxes to goals by shortest floor distance, which never overestimates. Dead squares and frozen 2x2 blocks are pruned.
 
-## How it works
+## Results
 
-Every generated level is one hallway plus 1–4 small rooms (3–4 boxes each).
-A box pushed out of a room can never come back, so each room is solved on
-its own and the rooms' push counts add up to the level's push optimum.
+Practice score **1,000,000 / 1,000,000** on the kit's practice set (26/26 fresh sets perfect), beating the house baseline plain-astar 1.0.0 (200,000). The per-room decomposition is what makes the optimum reachable: each room's push-optimal cost is computed independently and summed, so the solver never searches the full joint state space.
 
-Per room it runs A* over **pushes** (not steps):
+## How to run
 
-- a state is the sorted box squares plus the player's reachable region
-  (named by its lowest square);
-- the cost is pushes; the estimate is the cheapest assignment of boxes to
-  goals by shortest floor distance, which never overestimates — so weight 1
-  is push-optimal;
-- dead squares (a box there can never reach a goal) and frozen 2×2 blocks
-  are pruned;
-- all budgets are fixed node counts, never the clock, so two runs write
-  identical bytes.
-
-Weighted A* fallbacks (weights 2 and 5) still solve a room if the optimal
-search ever exhausts its budget, and a whole-level search is the last
-resort when a level does not split into clean rooms.
-
-## Practice results
-
-Practice set: **1,000,000 / 1,000,000** — all 5 instances solved in exactly
-P* pushes (13, 16, 29, 47, 60), in about 0.4 s total. The house baseline
-(plain-astar 1.0.0) scores 200,000 on the same set (only i001 solved).
-
-26 freshly drawn sets (generator seeds) also all score 1,000,000, worst
-run 0.57 s of the 60 s wall budget.
+The program runs as `node main.ts` (Node 22, which strips TypeScript types natively). It reads each instance from `$MAKEFUN_INPUT_DIR/<id>/` (default `/input`) and writes the move string as `$MAKEFUN_OUTPUT_DIR/<id>/solution.txt` (default `/output`), creating the output directory itself. Moves are LURD letters (`u`, `d`, `l`, `r`, upper or lower case). All budgets are fixed node counts, never the clock, so two runs write identical bytes. The 60-second wall budget for the whole 5-instance set is met by fixed work budgets, not the clock.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see `LICENSE`.
